@@ -1,0 +1,49 @@
+language: go
+go_import_path: github.com/vntchain/go-vnt
+sudo: false
+notifications: always
+matrix:
+  include:
+    - stage: Build & Test on linux go1.10.x
+      os: linux
+      dist: trusty
+      sudo: required
+      go: 1.10.x
+      before_install:
+        - sudo modprobe fuse
+        - sudo chmod 666 /dev/fuse
+        - sudo chown root:$USER /etc/fuse.conf      
+      script:
+        - make test
+
+
+    # These are the latest Go versions.
+    - stage: Build & Test on linux go1.11.x
+      if: branch = master
+      os: linux
+      dist: xenial
+      sudo: required
+      go: 1.11.x
+      before_install:
+        - sudo modprobe fuse
+        - sudo chmod 666 /dev/fuse
+        - sudo chown root:$USER /etc/fuse.conf      
+      script:
+        - make test
+
+    - stage: Build & Test on OSX
+      if: branch = master
+      os: osx
+      go: 1.11.x
+      before_install:
+        - echo "Increase the maximum number of open file descriptors on macOS"
+        - NOFILE=20480
+        - sudo sysctl -w kern.maxfiles=$NOFILE
+        - sudo sysctl -w kern.maxfilesperproc=$NOFILE
+        - sudo launchctl limit maxfiles $NOFILE $NOFILE
+        - sudo launchctl limit maxfiles
+        - ulimit -S -n $NOFILE
+        - ulimit -n
+        - unset -f cd # workaround for https://github.com/travis-ci/travis-ci/issues/8703
+      script:
+        - make test
